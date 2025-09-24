@@ -1,0 +1,53 @@
+
+#=== Maven build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+*.tmp
+*.out
+*.class
+*.swp
+
+#=== IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+#=== Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+#=== VS Code
+.vscode/
+
+#=== OS files
+.DS_Store
+Thumbs.db
+
+#=== Environment & secrets
+.env
+*.local
+*.secret
+*.key
+*.pem
+
+#=== Docker
+docker-data/
+db_data/
+*.pid
+
+#=== Logs & reports
+logs/
+*.gz
+coverage/
+jacoco.exec
+site/
+reports/
+
+#=== Misc temp/backup
+*~
+*.bak
+*.swo
