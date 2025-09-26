@@ -1,1 +1,206 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.3
+info:
+  title: Bank Cards Management API
+  description: API для управления банковскими картами
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /api/auth/register:
+    post:
+      summary: Регистрация нового пользователя
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Пользователь успешно зарегистрирован
+        '400':
+          description: Ошибка валидации или пользователь уже существует
+  /api/auth/login:
+    post:
+      summary: Вход в систему
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/admin/auth/login:
+    post:
+      summary: Вход для администратора
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/cards:
+    get:
+      summary: Получить список карт пользователя
+      tags: [Cards]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по имени владельца
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Номер страницы
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Размер страницы
+      responses:
+        '200':
+          description: Список карт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPage'
+    post:
+      summary: Создать новую карту
+      tags: [Cards]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardRequest'
+      responses:
+        '200':
+          description: Карта успешно создана
+  /api/transfer:
+    post:
+      summary: Перевод между своими картами
+      tags: [Transfer]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Перевод выполнен успешно
+        '400':
+          description: Ошибка валидации или недостаточно средств
+
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: "user123"
+        password:
+          type: string
+          example: "password123"
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+    CardDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        maskedNumber:
+          type: string
+        ownerName:
+          type: string
+        expiry:
+          type: string
+        status:
+          type: string
+        balance:
+          type: number
+          format: decimal
+    CreateCardRequest:
+      type: object
+      required: [cardNumber, ownerName, expiry, initialBalance]
+      properties:
+        cardNumber:
+          type: string
+          example: "4111111111111111"
+        ownerName:
+          type: string
+          example: "IVAN PETROV"
+        expiry:
+          type: string
+          example: "2025-12"
+        initialBalance:
+          type: number
+          format: decimal
+          example: 1000.00
+    TransferRequest:
+      type: object
+      required: [fromCardId, toCardId, amount]
+      properties:
+        fromCardId:
+          type: integer
+          example: 1
+        toCardId:
+          type: integer
+          example: 2
+        amount:
+          type: number
+          format: decimal
+          example: 100.50
+    CardPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardDto'
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
