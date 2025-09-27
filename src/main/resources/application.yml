@@ -48,7 +48,7 @@ springdoc:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:changeit1234567890changeit1234567890changeit1234567890}
+    secret: ${JWT_SECRET:abcdefgh1234567890abcdefgh1234567890abcdefgh1234567890}
     expirationMs: 86400000
   aes:
     key: ${AES_KEY:0123456789abcdef0123456789abcdef}
