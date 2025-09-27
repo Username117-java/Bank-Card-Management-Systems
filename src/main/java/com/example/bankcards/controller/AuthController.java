@@ -57,7 +57,7 @@ public class AuthController {
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
 
         Set<String> roles = user.getRoles().stream()
-                .map(role -> role.name().startsWith("ROLE_") ? role.name() : "ROLE_" + role.name())
+                .map(Enum::name)
                 .collect(Collectors.toSet());
 
         String token = jwtProvider.generateToken(req.getUsername(), roles);

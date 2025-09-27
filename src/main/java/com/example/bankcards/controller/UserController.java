@@ -1,7 +1,11 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.mapper.UserMapper;
 import com.example.bankcards.repository.UserRepository;
+import com.example.bankcards.service.CardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -18,20 +23,24 @@ import java.util.Map;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final CardService cardService;
+    private final UserMapper userMapper;
 
     @GetMapping
-    public ResponseEntity<Page<User>> getAllUsers(
+    public ResponseEntity<Page<UserDto>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<User> users = userRepository.findAll(PageRequest.of(page, size));
-        return ResponseEntity.ok(users);
+        Page<UserDto> dtoPage = userRepository
+                .findAll(PageRequest.of(page, size))
+                .map(userMapper::toDto);
+        return ResponseEntity.ok(dtoPage);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userMapper.toDto(user));
     }
 
     @DeleteMapping("/{id}")
@@ -46,9 +55,24 @@ public class UserController {
     @GetMapping("/{id}/cards")
     public ResponseEntity<?> getUserCards(
             @PathVariable Long id,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Здесь можно добавить сервис для получения карт пользователя
-        return ResponseEntity.ok(Map.of("message", "Функциональность в разработке"));
+
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOptional.get();
+
+        try {
+            Page<CardDto> cards = cardService.listUserCards(user, search, status, page, size);
+            return ResponseEntity.ok(cards);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body("Ошибка при получении карт пользователя: " + e.getMessage());
+        }
     }
 }

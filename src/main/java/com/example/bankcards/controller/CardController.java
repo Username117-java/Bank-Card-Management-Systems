@@ -33,11 +33,12 @@ public class CardController {
     public ResponseEntity<Page<CardDto>> listMyCards(
             @AuthenticationPrincipal UserDetails principal,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         User user = getCurrentUser(principal);
-        Page<CardDto> cards = cardService.listUserCards(user, search, page, size);
+        Page<CardDto> cards = cardService.listUserCards(user, search, status, page, size);
         return ResponseEntity.ok(cards);
     }
 

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Slf4j
@@ -23,25 +25,21 @@ public class CardExpiryService {
     @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void checkAndUpdateExpiredCards() {
-        List<Card> activeCards = cardRepository.findByStatus(CardStatus.ACTIVE);
-        int updatedCount = 0;
-
-        for (Card card : activeCards) {
+        YearMonth now = YearMonth.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/yy");
+        List<Card> cards = cardRepository.findAll();
+        for (Card card : cards) {
             try {
-                YearMonth expiry = YearMonth.parse(card.getExpiry());
-                if (expiry.isBefore(YearMonth.now()) && card.getStatus() != CardStatus.EXPIRED) {
+                YearMonth expiry = YearMonth.parse(card.getExpiry(), fmt);
+                if (expiry.isBefore(now)) {
                     card.setStatus(CardStatus.EXPIRED);
                     cardRepository.save(card);
-                    updatedCount++;
-                    log.info("Карта {} помечена как просроченная", card.getMaskedNumber());
                 }
-            } catch (Exception e) {
-                log.warn("Ошибка при проверке срока действия карты {}: {}", card.getId(), e.getMessage());
+            } catch (DateTimeParseException e) {
+                // Если формат неправильный — считаем карту некорректной
+                card.setStatus(CardStatus.EXPIRED);
+                cardRepository.save(card);
             }
-        }
-
-        if (updatedCount > 0) {
-            log.info("Обновлено статусов карт: {}", updatedCount);
         }
     }
 }
